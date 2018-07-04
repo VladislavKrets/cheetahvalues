@@ -4,9 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import online.omnia.values.HttpMethodsUtils;
 import online.omnia.values.deserializers.StateDeserializer;
+import online.omnia.values.entities.City;
 import online.omnia.values.entities.Country;
 import online.omnia.values.entities.CountryStateEntity;
 import online.omnia.values.entities.State;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +51,8 @@ public class StatesThread implements Runnable{
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(List.class, new StateDeserializer());
         Gson gson = builder.create();
+
         return gson.fromJson(answer, List.class);
     }
+
 }

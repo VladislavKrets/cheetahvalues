@@ -2,9 +2,7 @@ package online.omnia.values;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import online.omnia.values.deserializers.CarrierDeserializer;
 import online.omnia.values.deserializers.CountryDeserializer;
-import online.omnia.values.deserializers.StateDeserializer;
 import online.omnia.values.deserializers.TokenDeserializer;
 import online.omnia.values.entities.*;
 import online.omnia.values.threads.CarrierThread;
@@ -13,12 +11,10 @@ import online.omnia.values.threads.StatesThread;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,15 +42,14 @@ public class Main {
         main.handleCities(url, token, countries);
     }
     private void handleCities(String url, Token token, List<Country> countries) {
-        List<CountryCityEntity> carriersLists = new CopyOnWriteArrayList<>();
+        HSSFWorkbook hssfWorkbook = new HSSFWorkbook();
 
         CountDownLatch countDownLatch = new CountDownLatch(countries.size());
         ExecutorService executor = Executors.newFixedThreadPool(10);
 
         for (Country country : countries) {
-            executor.submit(new CitiesThread(
-                    carriersLists, countDownLatch, country, token.getAccessToken(), url
-            ));
+            executor.submit(new CitiesThread(countDownLatch, country, token.getAccessToken(), url,
+                    hssfWorkbook));
         }
         try {
             countDownLatch.await();
@@ -62,10 +57,20 @@ public class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        writeAllCities(carriersLists);
+        try {
+            hssfWorkbook.write(new FileOutputStream(new File("cities.xls").getAbsolutePath()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            hssfWorkbook.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
-    private void writeAllCities(List<CountryCityEntity> countryCityEntities) {
-        HSSFWorkbook hssfWorkbook = new HSSFWorkbook();
+    /*private void writeAllCities(List<CountryCityEntity> countryCityEntities) {
+
 
         for (CountryCityEntity countryCityEntity : countryCityEntities) {
             writeCityToHssFile(countryCityEntity.getCities(),
@@ -82,7 +87,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
+    }*/
     private void writeCityToHssFile(List<City> cities, Country country, HSSFWorkbook hssfWorkbook) {
         HSSFSheet sheet = null;
         try {
@@ -164,8 +169,7 @@ public class Main {
         ExecutorService executor = Executors.newFixedThreadPool(10);
         for (Country country : countries) {
             executor.submit(new StatesThread(
-                    statesLists, countDownLatch, country, token.getAccessToken(), url
-            ));
+                    statesLists, countDownLatch, country, token.getAccessToken(), url));
         }
         try {
             countDownLatch.await();
